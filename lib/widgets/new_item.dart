@@ -1,4 +1,7 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
+
 import 'package:shopping_list/data/categories.dart';
 
 class NewItem extends StatefulWidget {
@@ -9,6 +12,20 @@ class NewItem extends StatefulWidget {
 }
 
 class _NewItemState extends State<NewItem> {
+  final _formKey = GlobalKey<FormState>();
+  String _enteredGroceryName = '';
+
+  void _saveItem() {
+    if (_formKey.currentState!.validate()) {
+      _formKey.currentState!.save();
+      log(_enteredGroceryName);
+    }
+  }
+
+  void _resetForm() {
+    _formKey.currentState!.reset();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -18,12 +35,13 @@ class _NewItemState extends State<NewItem> {
       body: Padding(
         padding: const EdgeInsets.all(12),
         child: Form(
+          key: _formKey,
           child: Column(
             children: [
               TextFormField(
                 maxLength: 50,
                 decoration: const InputDecoration(
-                  label: Text('Name'),
+                  label: Text('Grocery Name'),
                 ),
                 validator: (value) {
                   if (value == null ||
@@ -34,6 +52,13 @@ class _NewItemState extends State<NewItem> {
                   }
                   return null;
                 },
+                onSaved: (newValue) {
+                  // This check is redundant because we've aleardy check if the value is null in the validator
+                  // if (newValue == null) {
+                  //   return;
+                  // }
+                  _enteredGroceryName = newValue!;
+                },
               ),
               Row(
                 crossAxisAlignment: CrossAxisAlignment.end,
@@ -43,6 +68,7 @@ class _NewItemState extends State<NewItem> {
                       decoration: const InputDecoration(
                         label: Text('Quantity'),
                       ),
+                      keyboardType: TextInputType.number,
                       initialValue: '1',
                       validator: (value) {
                         if (value == null ||
@@ -86,11 +112,11 @@ class _NewItemState extends State<NewItem> {
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   TextButton(
-                    onPressed: () {},
+                    onPressed: _resetForm,
                     child: const Text('Reset'),
                   ),
                   ElevatedButton(
-                    onPressed: () {},
+                    onPressed: _saveItem,
                     child: const Text('Add Item'),
                   )
                 ],
