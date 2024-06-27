@@ -3,6 +3,7 @@ import 'dart:developer';
 import 'package:flutter/material.dart';
 
 import 'package:shopping_list/data/categories.dart';
+import 'package:shopping_list/models/category.dart';
 
 class NewItem extends StatefulWidget {
   const NewItem({super.key});
@@ -14,11 +15,17 @@ class NewItem extends StatefulWidget {
 class _NewItemState extends State<NewItem> {
   final _formKey = GlobalKey<FormState>();
   String _enteredGroceryName = '';
+  int _enteredGroceryQuantity = 1;
+  // We add the ! because we already know that a category with Categories.vegetables
+  // does exit so we don't need to check
+  Category _selectedCategory = categories[Categories.vegetables]!;
 
   void _saveItem() {
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
       log(_enteredGroceryName);
+      log(_enteredGroceryQuantity.toString());
+      log(_selectedCategory.toString());
     }
   }
 
@@ -69,7 +76,7 @@ class _NewItemState extends State<NewItem> {
                         label: Text('Quantity'),
                       ),
                       keyboardType: TextInputType.number,
-                      initialValue: '1',
+                      initialValue: _enteredGroceryQuantity.toString(),
                       validator: (value) {
                         if (value == null ||
                             value.isEmpty ||
@@ -79,11 +86,19 @@ class _NewItemState extends State<NewItem> {
                         }
                         return null;
                       },
+                      onSaved: (newValue) {
+                        // We used parse insted of tryPase because parse will throw an error if it fails
+                        // to convert the string into a number while tryParse will yield to null
+                        // And while we checked if the value is not null in the validator so we can make sur that
+                        // the new value will never be null
+                        _enteredGroceryQuantity = int.parse(newValue!);
+                      },
                     ),
                   ),
                   const SizedBox(width: 8),
                   Expanded(
                     child: DropdownButtonFormField(
+                      value: _selectedCategory,
                       items: [
                         for (final category in categories.entries)
                           DropdownMenuItem(
@@ -102,7 +117,13 @@ class _NewItemState extends State<NewItem> {
                             ),
                           )
                       ],
-                      onChanged: (value) {},
+                      onChanged: (newValue) {
+                        // Here we also don't need to check because we've set an initial value for the DropdownButtomFormField
+                        // which is not null
+                        setState(() {
+                          _selectedCategory = newValue!;
+                        });
+                      },
                     ),
                   ),
                 ],
