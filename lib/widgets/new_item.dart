@@ -44,6 +44,15 @@ class _NewItemState extends State<NewItem> {
                         label: Text('Quantity'),
                       ),
                       initialValue: '1',
+                      validator: (value) {
+                        if (value == null ||
+                            value.isEmpty ||
+                            int.tryParse(value) == null ||
+                            int.tryParse(value)! <= 0) {
+                          return 'Must be valid, positive number';
+                        }
+                        return null;
+                      },
                     ),
                   ),
                   const SizedBox(width: 8),
