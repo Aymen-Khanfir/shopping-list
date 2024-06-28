@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:developer';
 
 import 'package:flutter/material.dart';
 
@@ -23,12 +24,12 @@ class _NewItemState extends State<NewItem> {
   // does exit so we don't need to check
   Category _selectedCategory = categories[Categories.vegetables]!;
 
-  void _saveItem() {
+  void _saveItem() async {
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
       final url = Uri.https(
           'shopping-list-5d7f5-default-rtdb.europe-west1.firebasedatabase.app', "/shopping-list.json");
-      http.post(
+      final response = await http.post(
         url,
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
@@ -37,18 +38,14 @@ class _NewItemState extends State<NewItem> {
           'category': _selectedCategory.title,
         }),
       );
-      
-      
 
-      // Navigator.of(context).pop(
-      //   GroceryItem(
-      //     // It's not a perfect id, juste to speed process
-      //     id: DateTime.now.toString(),
-      //     name: _enteredGroceryName,
-      //     quantity: _enteredGroceryQuantity,
-      //     category: _selectedCategory,
-      //   ),
-      // );
+      log(response.statusCode.toString());
+      log(response.body);
+
+      if (!context.mounted) {
+        return;
+      }
+      Navigator.of(context).pop();
     }
   }
 
