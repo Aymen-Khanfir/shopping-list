@@ -56,13 +56,19 @@ class _GroceryListState extends State<GroceryList> {
   void _addItem() async {
     // You should always add the type of data you should return with when doing a pop action
     // otherwise it will be set to string
-    await Navigator.of(context).push<GroceryItem>(
+    final newItem = await Navigator.of(context).push<GroceryItem>(
       MaterialPageRoute(
         builder: (ctx) => const NewItem(),
       ),
     );
 
-    _loadItems();
+    if (newItem == null) {
+      return;
+    }
+
+    setState(() {
+      _groceryItems.add(newItem);
+    });
   }
 
   void removeItem(item) {

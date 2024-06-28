@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 
 import 'package:shopping_list/data/categories.dart';
 import 'package:shopping_list/models/category.dart';
+import 'package:shopping_list/models/grocery_item.dart';
 
 class NewItem extends StatefulWidget {
   const NewItem({super.key});
@@ -25,10 +26,14 @@ class _NewItemState extends State<NewItem> {
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
       final url = Uri.https(
-          'shopping-list-5d7f5-default-rtdb.europe-west1.firebasedatabase.app', "/shopping-list.json");
-      await http.post(
+        'shopping-list-5d7f5-default-rtdb.europe-west1.firebasedatabase.app',
+        "/shopping-list.json",
+      );
+      final response = await http.post(
         url,
-        headers: {'Content-Type': 'application/json'},
+        headers: {
+          'Content-Type': 'application/json',
+        },
         body: json.encode({
           'name': _enteredGroceryName,
           'quantity': _enteredGroceryQuantity,
@@ -36,10 +41,19 @@ class _NewItemState extends State<NewItem> {
         }),
       );
 
-      if (context.mounted) {
+      final Map<String, dynamic> resData = json.decode(response.body);
+
+      if (!context.mounted) {
         return;
       }
-      Navigator.of(context).pop();
+      Navigator.of(context).pop(
+        GroceryItem(
+          id: resData['name'],
+          name: _enteredGroceryName,
+          quantity: _enteredGroceryQuantity,
+          category: _selectedCategory,
+        ),
+      );
     }
   }
 
