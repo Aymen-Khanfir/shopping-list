@@ -16,6 +16,8 @@ class GroceryList extends StatefulWidget {
 
 class _GroceryListState extends State<GroceryList> {
   List<GroceryItem> _groceryItems = [];
+  bool _isLoading = true;
+  String? _error;
 
   @override
   void initState() {
@@ -29,6 +31,13 @@ class _GroceryListState extends State<GroceryList> {
       "/shopping-list.json",
     );
     final response = await http.get(url);
+
+    if (response.statusCode >= 400) {
+      setState(() {
+        _error = "Failed to fetch data. Please try again later!";
+      });
+    }
+
     final Map<String, dynamic> groceriesListData = jsonDecode(response.body);
     final List<GroceryItem> loadedItems = [];
     for (var item in groceriesListData.entries) {
@@ -50,6 +59,7 @@ class _GroceryListState extends State<GroceryList> {
 
     setState(() {
       _groceryItems = loadedItems;
+      _isLoading = false;
     });
   }
 
@@ -77,6 +87,7 @@ class _GroceryListState extends State<GroceryList> {
     setState(() {
       _groceryItems.remove(item);
     });
+
     ScaffoldMessenger.of(context).clearSnackBars();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -100,6 +111,12 @@ class _GroceryListState extends State<GroceryList> {
       child: Text('No Groceries items available yet!'),
     );
 
+    if (_isLoading) {
+      mainContent = const Center(
+        child: CircularProgressIndicator(),
+      );
+    }
+
     if (_groceryItems.isNotEmpty) {
       mainContent = ListView.builder(
         itemCount: _groceryItems.length,
@@ -122,6 +139,10 @@ class _GroceryListState extends State<GroceryList> {
           ),
         ),
       );
+    }
+
+    if (_error != null) {
+      mainContent = Center(child: Text(_error!));
     }
 
     return Scaffold(

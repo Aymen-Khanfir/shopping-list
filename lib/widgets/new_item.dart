@@ -21,10 +21,14 @@ class _NewItemState extends State<NewItem> {
   // We add the ! because we already know that a category with Categories.vegetables
   // does exit so we don't need to check
   Category _selectedCategory = categories[Categories.vegetables]!;
+  bool _isSending = false;
 
   void _saveItem() async {
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
+      setState(() {
+        _isSending = true;
+      });
       final url = Uri.https(
         'shopping-list-5d7f5-default-rtdb.europe-west1.firebasedatabase.app',
         "/shopping-list.json",
@@ -161,12 +165,20 @@ class _NewItemState extends State<NewItem> {
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   TextButton(
-                    onPressed: _resetForm,
+                    // We used a null as a return value to disable the button
+                    onPressed: _isSending ? null : _resetForm,
                     child: const Text('Reset'),
                   ),
                   ElevatedButton(
-                    onPressed: _saveItem,
-                    child: const Text('Add Item'),
+                    // We used a null as a return value to disable the button
+                    onPressed: _isSending ? null : _saveItem,
+                    child: _isSending
+                        ? const SizedBox(
+                            height: 16,
+                            width: 16,
+                            child: CircularProgressIndicator(),
+                          )
+                        : const Text('Add Item'),
                   )
                 ],
               )
