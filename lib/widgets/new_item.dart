@@ -1,13 +1,10 @@
 import 'dart:convert';
-import 'dart:developer';
 
 import 'package:flutter/material.dart';
-
 import 'package:http/http.dart' as http;
 
 import 'package:shopping_list/data/categories.dart';
 import 'package:shopping_list/models/category.dart';
-import 'package:shopping_list/models/grocery_item.dart';
 
 class NewItem extends StatefulWidget {
   const NewItem({super.key});
@@ -29,7 +26,7 @@ class _NewItemState extends State<NewItem> {
       _formKey.currentState!.save();
       final url = Uri.https(
           'shopping-list-5d7f5-default-rtdb.europe-west1.firebasedatabase.app', "/shopping-list.json");
-      final response = await http.post(
+      await http.post(
         url,
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
@@ -39,10 +36,7 @@ class _NewItemState extends State<NewItem> {
         }),
       );
 
-      log(response.statusCode.toString());
-      log(response.body);
-
-      if (!context.mounted) {
+      if (context.mounted) {
         return;
       }
       Navigator.of(context).pop();

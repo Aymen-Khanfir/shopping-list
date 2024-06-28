@@ -1,4 +1,9 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+
+import 'package:shopping_list/data/categories.dart';
 import 'package:shopping_list/models/grocery_item.dart';
 import 'package:shopping_list/widgets/new_item.dart';
 
@@ -10,22 +15,54 @@ class GroceryList extends StatefulWidget {
 }
 
 class _GroceryListState extends State<GroceryList> {
-  final List<GroceryItem> _groceryItems = [];
+  List<GroceryItem> _groceryItems = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadItems();
+  }
+
+  void _loadItems() async {
+    final url = Uri.https(
+      'shopping-list-5d7f5-default-rtdb.europe-west1.firebasedatabase.app',
+      "/shopping-list.json",
+    );
+    final response = await http.get(url);
+    final Map<String, dynamic> groceriesListData = jsonDecode(response.body);
+    final List<GroceryItem> loadedItems = [];
+    for (var item in groceriesListData.entries) {
+      final category = categories.entries
+          .firstWhere(
+            (catItem) => catItem.value.title == item.value['category'],
+          )
+          .value;
+
+      loadedItems.add(
+        GroceryItem(
+          id: item.key,
+          name: item.value['name'],
+          quantity: item.value['quantity'],
+          category: category,
+        ),
+      );
+    }
+
+    setState(() {
+      _groceryItems = loadedItems;
+    });
+  }
 
   void _addItem() async {
     // You should always add the type of data you should return with when doing a pop action
     // otherwise it will be set to string
-    final newItem = await Navigator.of(context).push<GroceryItem>(MaterialPageRoute(
-      builder: (ctx) => const NewItem(),
-    ));
+    await Navigator.of(context).push<GroceryItem>(
+      MaterialPageRoute(
+        builder: (ctx) => const NewItem(),
+      ),
+    );
 
-    // Here newItem can be null because the user can get back from the addItem Screen without saving
-    if (newItem == null) {
-      return;
-    }
-    setState(() {
-      _groceryItems.add(newItem);
-    });
+    _loadItems();
   }
 
   void removeItem(item) {
