@@ -36,6 +36,14 @@ class _GroceryListState extends State<GroceryList> {
       setState(() {
         _error = "Failed to fetch data. Please try again later!";
       });
+      return;
+    }
+
+    if (response.body == 'null') {
+      setState(() {
+        _isLoading = false;
+      });
+      return;
     }
 
     final Map<String, dynamic> groceriesListData = jsonDecode(response.body);
@@ -81,27 +89,81 @@ class _GroceryListState extends State<GroceryList> {
     });
   }
 
-  void removeItem(item) {
+  void removeItem(GroceryItem item) async {
     final itemIndex = _groceryItems.indexOf(item);
 
     setState(() {
       _groceryItems.remove(item);
     });
 
+    final url = Uri.https(
+      'shopping-list-5d7f5-default-rtdb.europe-west1.firebasedatabase.app',
+      "/shopping-list/${item.id}.json",
+    );
+
+    final response = await http.delete(url);
+
     ScaffoldMessenger.of(context).clearSnackBars();
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        duration: const Duration(seconds: 3),
-        content: const Text("Expense deleted."),
-        action: SnackBarAction(
-          label: "Undo",
-          onPressed: () {
-            setState(() {
-              _groceryItems.insert(itemIndex, item);
-            });
-          },
-        ),
-      ),
+      response.statusCode <= 400
+          ? SnackBar(
+              duration: const Duration(seconds: 3),
+              content: const Text("Item deleted."),
+              action: SnackBarAction(
+                label: "Undo",
+                onPressed: () async {
+                  setState(() {
+                    _groceryItems.insert(itemIndex, item);
+                  });
+
+                  // Resave the item to the database
+                  final url = Uri.https(
+                    'shopping-list-5d7f5-default-rtdb.europe-west1.firebasedatabase.app',
+                    "/shopping-list.json",
+                  );
+
+                  final response = await http.post(
+                    url,
+                    headers: {
+                      'Content-Type': 'application/json',
+                    },
+                    body: json.encode({
+                      'name': item.name,
+                      'quantity': item.quantity,
+                      'category': item.category.title,
+                    }),
+                  );
+
+                  if (response.statusCode >= 400) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: const Text("Failed to re-save item. Please try again."),
+                        action: SnackBarAction(
+                          label: "Retry",
+                          onPressed: () async {
+                            // Retry the save operation
+                            setState(() {
+                              _groceryItems.remove(item);
+                            });
+                            removeItem(item);
+                          },
+                        ),
+                      ),
+                    );
+                  }
+                },
+              ),
+            )
+          : SnackBar(
+              duration: const Duration(seconds: 3),
+              content: const Text("An error occurred while trying to delete the item."),
+              action: SnackBarAction(
+                label: "Retry",
+                onPressed: () {
+                  removeItem(item);
+                },
+              ),
+            ),
     );
   }
 
@@ -127,7 +189,6 @@ class _GroceryListState extends State<GroceryList> {
           },
           child: ListTile(
             title: Text(_groceryItems[index].name),
-            // Acts like a prefix in a text input
             leading: Container(
               width: 24,
               height: 24,
